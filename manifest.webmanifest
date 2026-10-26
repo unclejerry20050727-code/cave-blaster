@@ -1,0 +1,17 @@
+{
+  "name": "深谷突擊 Cave Blaster",
+  "short_name": "深谷突擊",
+  "description": "推開鐘乳石柱、打爆菇菇怪，一路打到洞口！",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "fullscreen",
+  "orientation": "landscape",
+  "background_color": "#0b0810",
+  "theme_color": "#0b0810",
+  "lang": "zh-Hant",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

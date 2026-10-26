@@ -3,6 +3,9 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="apple-touch-icon" href="apple-touch-icon.png" />
+  <meta name="theme-color" content="#0b0810" />
   <title>深谷突擊 Cave Blaster</title>
   <style>
     html, body {
@@ -16,7 +19,8 @@
     }
     canvas {
       max-width: 100vw;
-      max-height: 100vh;
+      max-height: 100vh; /* 舊版瀏覽器 fallback */
+      max-height: 100dvh; /* iPhone Safari：dvh＝目前真正可見高度（100vh 含瀏覽器列，橫向時底部會被裁掉）*/
       image-rendering: pixelated;
       touch-action: none;
     }

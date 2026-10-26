@@ -1,5 +1,35 @@
 # 進度記錄（context 中斷後照這檔接續）
 
+## 2026-10-27（第八輪）：iPhone Safari 橫向底部被裁＋PWA 全螢幕 —— ✅ 完成
+
+### 背景
+Jerry：iPhone Safari 橫向畫面下方無法顯示，主角下半身超出螢幕外；問「Safari 可以全螢幕嗎？」
+
+### 原因
+- canvas CSS 用 `max-height: 100vh`。iPhone Safari 的 `100vh`＝「靜態」視口（最高狀態，含瀏覽器欄/主畫面指示區會蓋住的部分），
+  實際可見高度較小 → canvas 比可見區域高 → 底部被裁。
+- Safari 對網頁沒有「全螢幕」按鈕（Fullscreen API 只支援影音元素）；正解是 PWA。
+
+### 改動（f954e8f）
+- [x] canvas `max-height: 100vh` → `100dvh`（動態視口＝當下實際可見高度，自動跟隨瀏覽器欄狀態；保留 100vh fallback 給舊版）
+- [x] PWA 化（iPhone 全螢幕路線）：
+  - 新增 `manifest.webmanifest`（display: fullscreen、orientation: landscape、theme #0b0810）
+  - 新增 icon：`icon-192.png` / `icon-512.png` / `apple-touch-icon.png`（180，由 docs/game-cover.png ffmpeg 裁切縮放生成）
+  - index.html：manifest link＋apple-touch-icon＋theme-color
+  - iOS 16.4+：「新增至主畫面」→ 真正全螢幕啟動；舊版 iOS：standalone（無 Safari 欄）
+
+### 驗證（Playwright WebKit＋iPhone 15 模擬）
+- 直向 393×659：canvas 393×221 完整可見、觸控列顯示（flex）
+- 橫向 852×393：canvas 699×393 完整可見（左右 letterbox）、computed max-height=393px（＝100dvh）
+- 觸控 ▶ 點按 → titleSel 0→1（edge 下一幀消費，正常）
+- manifest / icon HTTP 200
+- 截圖：橫向標題畫面完整（封面/選單/作者/◀▶/確認/射擊/⏸🎵 全在）
+
+### 驗證
+- `node test/smoke.js` → 205 斷言 0 FAIL（本輪純前端布局/PWA，無遊戲邏輯改動）
+
+---
+
 ## 2026-10-26（第七輪）：手機觸控操作——商店與所有選單可用觸控操作 —— ✅ 完成
 
 ### 背景
