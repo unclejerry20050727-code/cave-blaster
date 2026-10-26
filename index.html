@@ -66,15 +66,26 @@
       padding: 0; z-index: 5;
     }
     #bgm-btn.off { border-color: rgba(106, 100, 120, 0.5); filter: grayscale(1); opacity: 0.65; }
+    #pause-btn {
+      position: absolute; top: 64px; right: 58px;
+      width: 42px; height: 42px;
+      display: flex; align-items: center; justify-content: center;
+      background: rgba(10, 8, 16, 0.55);
+      border: 2px solid rgba(255, 213, 74, 0.5);
+      border-radius: 10px;
+      font-size: 18px; line-height: 1; cursor: pointer;
+      padding: 0; z-index: 5;
+    }
   </style>
 </head>
 <body>
   <div id="stage">
     <canvas id="game" width="960" height="540"></canvas>
+    <button id="pause-btn" title="暫停">⏸</button>
     <button id="bgm-btn" title="BGM 開關">🎵</button>
   </div>
 
-  <!-- 手機觸控：左移 / 右移 / 跳躍 / 射擊 -->
+  <!-- 手機觸控：左移 / 右移 / 跳躍（選單＝確認）/ 射擊；選單畫面 ◀▶＝移動游標 -->
   <div id="touch-ui">
     <div class="tgroup">
       <div class="tbtn" id="btn-left">◀</div>

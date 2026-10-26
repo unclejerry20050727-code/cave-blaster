@@ -487,8 +487,9 @@ function pollGamepad() {
   gpPrev = now;
 }
 
-// 觸控
-const touch = { left: false, right: false, fire: false, actionQueued: false, jumpQueued: false };
+// 觸控（left/right 的 Edge = 選單移動邊緣觸發；選單畫面 ◀＝上、▶＝下）
+const touch = { left: false, right: false, fire: false, actionQueued: false, jumpQueued: false, leftEdge: false, rightEdge: false };
+let btnJumpEl = null;
 function setupTouch() {
   if (typeof document === "undefined" || !document.getElementById) return;
   const bind = (id, on, off) => {
@@ -503,14 +504,15 @@ function setupTouch() {
     el.addEventListener("mouseup", end);
     el.addEventListener("mouseleave", end);
   };
-  bind("btn-left", () => { touch.left = true; }, () => { touch.left = false; });
-  bind("btn-right", () => { touch.right = true; }, () => { touch.right = false; });
+  bind("btn-left", () => { touch.left = true; touch.leftEdge = true; }, () => { touch.left = false; });
+  bind("btn-right", () => { touch.right = true; touch.rightEdge = true; }, () => { touch.right = false; });
   bind("btn-fire", () => { touch.fire = true; }, () => { touch.fire = false; });
   bind("btn-jump", () => {
     touch.jumpQueued = true;
-    // 非戰鬥畫面時，跳躍鍵也當「確認」用（商店＝確認游標列）
-    if (state.mode !== "playing") touch.actionQueued = true;
+    // 非戰鬥畫面（含暫停）時，跳躍鍵也當「確認」用（商店＝確認游標列）
+    if (state.mode !== "playing" || state.paused) touch.actionQueued = true;
   });
+  btnJumpEl = document.getElementById("btn-jump");
   try {
     if (window.matchMedia && window.matchMedia("(pointer: coarse)").matches) {
       const ui = document.getElementById("touch-ui");
@@ -3553,26 +3555,29 @@ function frame(now) {
   // 手把 / 觸控的「確認」與「跳躍」邊緣觸發（按鈕號隨校正映射）
   const actionEdge = gpEdge.has(gpMap.confirm) || gpEdge.has(gpMap.jump) || touch.actionQueued;
   const jumpEdge = gpEdge.has(gpMap.jump) || touch.jumpQueued;
+  const touchLeftEdge = touch.leftEdge, touchRightEdge = touch.rightEdge;
   touch.actionQueued = false;
   touch.jumpQueued = false;
+  touch.leftEdge = false;
+  touch.rightEdge = false;
   if (state.mode === "playing") {
     if (gpEdge.has(gpMap.pause)) { state.paused = !state.paused; if (state.paused) pauseSel = 0; } // 暫停鍵（預設 B）
     if (state.paused) {
-      // 暫停選單手把：十字鍵移動＋ A/Start 確認
-      if (gp.upEdge) pauseSel = 0;
-      else if (gp.downEdge) pauseSel = 1;
+      // 暫停選單手把：十字鍵移動＋ A/Start 確認；觸控 ◀▶ 同義
+      if (gp.upEdge || touchLeftEdge) pauseSel = 0;
+      else if (gp.downEdge || touchRightEdge) pauseSel = 1;
       if (actionEdge) { state.paused = false; if (pauseSel === 1) state.mode = "title"; }
     } else if (jumpEdge && !player.falling && !player.dead &&
         (player.onGround || player.airJumps > 0)) {
       player.jumpBuf = 0.15;
     }
   } else if (state.mode === "shop") {
-    if (gp.upEdge) shopSel = (shopSel + SHOP_ROWS - 1) % SHOP_ROWS;
-    else if (gp.downEdge) shopSel = (shopSel + 1) % SHOP_ROWS;
-    if (actionEdge) shopConfirm(); // A/Start＝確認游標列
+    if (gp.upEdge || touchLeftEdge) shopSel = (shopSel + SHOP_ROWS - 1) % SHOP_ROWS; // 觸控 ◀＝上
+    else if (gp.downEdge || touchRightEdge) shopSel = (shopSel + 1) % SHOP_ROWS;     // 觸控 ▶＝下
+    if (actionEdge) shopConfirm(); // A/Start/觸控跳＝確認游標列
   } else if (state.mode === "title") {
-    if (gp.upEdge) titleSel = (titleSel + 2) % 3;
-    else if (gp.downEdge) titleSel = (titleSel + 1) % 3;
+    if (gp.upEdge || touchLeftEdge) titleSel = (titleSel + 2) % 3;
+    else if (gp.downEdge || touchRightEdge) titleSel = (titleSel + 1) % 3;
     if (actionEdge) (titleSel === 0 ? startStory() : titleSel === 1 ? enterCalib() : (state.mode = "ach"));
   } else if (state.mode === "ach") {
     if (actionEdge) state.mode = "title";
@@ -3580,8 +3585,8 @@ function frame(now) {
     if (actionEdge) story.skip();
   } else if (state.mode === "gameover") {
     // 死亡選單手把：十字鍵移動；B=去商店（快捷）、A/Start=確認選定
-    if (gp.upEdge) overSel = 0;
-    else if (gp.downEdge) overSel = (overSel + 1) % 3;
+    if (gp.upEdge || touchLeftEdge) overSel = 0;
+    else if (gp.downEdge || touchRightEdge) overSel = (overSel + 1) % 3;
     if (gpEdge.has(gpMap.pause)) enterShop();
     else if (actionEdge) { if (overSel === 1) enterShop(); else if (overSel === 2) state.mode = "title"; else startGame(); }
   } else if (state.mode === "calib") {
@@ -3600,6 +3605,11 @@ function frame(now) {
       }
     }
   }
+  // 觸控跳躍鍵標籤：戰鬥中＝跳，選單畫面＝確認
+  if (btnJumpEl) {
+    const lb = (state.mode === "playing" && !state.paused) ? "跳" : "確認";
+    if (btnJumpEl.textContent !== lb) btnJumpEl.textContent = lb;
+  }
   update(dt);
   draw();
   requestAnimationFrame(frame);
@@ -3614,13 +3624,22 @@ function frame(now) {
   b.addEventListener("click", () => { wakeAudio(); setBgm(!BGM.on); });
 })();
 
+// 暫停按鈕（右上角，BGM 按鈕旁）：遊戲中點按＝P 鍵（手機沒鍵盤也能暫停）
+(function () {
+  const b = document.getElementById("pause-btn");
+  if (!b) return;
+  b.addEventListener("click", () => {
+    if (state.mode === "playing") { state.paused = !state.paused; if (state.paused) pauseSel = 0; }
+  });
+})();
+
 setupTouch();
 requestAnimationFrame(frame);
 
 // ---------------- 測試用匯出（只有 Node 有 module） ----------------
 if (typeof module !== "undefined" && module.exports) {
   module.exports = {
-  state, player, story, STORY_END, gpMap,
+  state, player, story, STORY_END, gpMap, touch, SHOP_ROWS,
   get doors() { return doors; },
   get pillars() { return pillars; },
   get enemies() { return enemies; },
@@ -3650,6 +3669,7 @@ if (typeof module !== "undefined" && module.exports) {
   spawnBossDoor, spawnBoss,
   enterShop, shopBuy, shopConfirm, startStory, startGame, centeredPanel,
   get shopSel() { return shopSel; },
+  get titleSel() { return titleSel; },
   get pauseSel() { return pauseSel; },
   get overSel() { return overSel; },
   buyUpgrade, weaponDmg, weaponCd, UPGRADES,

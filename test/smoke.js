@@ -1109,6 +1109,47 @@ ok(game.bossStage === null && game.theme.crystal1 === game.THEMES[game.caveKey].
   state.mode = "shop";
 })();
 
+// ---------- 49. 手機觸控選單：◀▶＝移動游標（商店/死亡/標題/暫停）＋跳＝確認 ----------
+(function () {
+  // (a) 商店：◀▶ 移動游標＋跳確認購買（手機買武器）
+  game.enterShop();
+  state.owned = ["pistol"]; state.gold = 500;
+  const sel0 = game.shopSel;
+  game.touch.rightEdge = true; frames(1);
+  ok(game.shopSel === (sel0 + 1) % game.SHOP_ROWS, "觸控 ▶ 商店游標下移一行");
+  game.touch.leftEdge = true; frames(1);
+  ok(game.shopSel === sel0, "觸控 ◀ 商店游標回到原列");
+  const n = (1 - game.shopSel + game.SHOP_ROWS) % game.SHOP_ROWS; // 走到機槍（列 1）
+  for (let i = 0; i < n; i++) { game.touch.rightEdge = true; frames(1); }
+  ok(game.shopSel === 1, "觸控 ▶ 移動游標到機槍列");
+  game.touch.actionQueued = true; frames(1);
+  ok(state.owned.includes("mg"), "觸控跳確認游標列：成功買下機槍");
+  ok(state.gold === 200, "手機購買扣硬幣正確（500-300=200）");
+  // (b) 死亡選單：◀▶ 選擇＋跳確認（手機死亡後也能進商店）
+  state.mode = "gameover";
+  game.touch.leftEdge = true; frames(1);
+  ok(game.overSel === 0, "觸控 ◀ 死亡選單回到「再試一次」");
+  game.touch.rightEdge = true; frames(1);
+  ok(game.overSel === 1, "觸控 ▶ 死亡選單移到「去武器商店」");
+  game.touch.actionQueued = true; frames(1);
+  ok(state.mode === "shop", "觸控跳確認：死亡畫面可進武器商店");
+  // (c) 標題選單：◀▶ 移動（手把校正/成就也選得到）
+  state.mode = "title";
+  const t0 = game.titleSel;
+  game.touch.rightEdge = true; frames(1);
+  ok(game.titleSel === (t0 + 1) % 3, "觸控 ▶ 標題選單下移一項（循環）");
+  game.touch.leftEdge = true; frames(1);
+  ok(game.titleSel === t0, "觸控 ◀ 標題選單回到原項（循環）");
+  // (d) 暫停選單：◀▶＋跳確認回標題（手機遊戲中也能退出）
+  game.startGame();
+  state.paused = true;
+  game.touch.rightEdge = true; frames(1);
+  ok(game.pauseSel === 1, "觸控 ▶ 暫停選單移到「回標題」");
+  game.touch.actionQueued = true; frames(1);
+  ok(state.mode === "title" && !state.paused, "觸控跳確認：暫停畫面回標題");
+  state.mode = "shop";
+})();
+
 // ---------- 結果 ----------
 console.log(
   `mode=${state.mode} score=${state.score} hp=${state.hp} ` +
