@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>深谷突擊 Cave Blaster</title>
+  <style>
+    html, body {
+      margin: 0;
+      height: 100%;
+      background: #0b0810;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+    canvas {
+      max-width: 100vw;
+      max-height: 100vh;
+      image-rendering: pixelated;
+      touch-action: none;
+    }
+    /* 觸控操作列（只有觸控裝置顯示） */
+    #touch-ui {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      display: none;
+      justify-content: space-between;
+      align-items: flex-end;
+      padding: 10px 16px calc(10px + env(safe-area-inset-bottom));
+      pointer-events: none;
+      z-index: 10;
+    }
+    #touch-ui .tgroup { display: flex; gap: 14px; pointer-events: auto; }
+    .tbtn {
+      width: 70px;
+      height: 70px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.10);
+      border: 2px solid rgba(255, 255, 255, 0.28);
+      color: rgba(255, 255, 255, 0.8);
+      font: bold 15px sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: none;
+    }
+    .tbtn:active { background: rgba(255, 255, 255, 0.28); }
+    .tbtn.fire { width: 88px; height: 88px; }
+    .tbtn.small { width: 62px; height: 62px; }
+    /* 遊戲舞台（canvas + 右上角 BGM 按鈕，top 64px 避開心形血量區） */
+    #stage { position: relative; display: flex; }
+    #bgm-btn {
+      position: absolute; top: 64px; right: 8px;
+      width: 42px; height: 42px;
+      display: flex; align-items: center; justify-content: center;
+      background: rgba(10, 8, 16, 0.55);
+      border: 2px solid rgba(255, 213, 74, 0.5);
+      border-radius: 10px;
+      font-size: 20px; line-height: 1; cursor: pointer;
+      padding: 0; z-index: 5;
+    }
+    #bgm-btn.off { border-color: rgba(106, 100, 120, 0.5); filter: grayscale(1); opacity: 0.65; }
+  </style>
+</head>
+<body>
+  <div id="stage">
+    <canvas id="game" width="960" height="540"></canvas>
+    <button id="bgm-btn" title="BGM 開關">🎵</button>
+  </div>
+
+  <!-- 手機觸控：左移 / 右移 / 跳躍 / 射擊 -->
+  <div id="touch-ui">
+    <div class="tgroup">
+      <div class="tbtn" id="btn-left">◀</div>
+      <div class="tbtn" id="btn-right">▶</div>
+    </div>
+    <div class="tgroup">
+      <div class="tbtn small" id="btn-jump">跳</div>
+      <div class="tbtn fire" id="btn-fire">射擊</div>
+    </div>
+  </div>
+
+  <script src="game.js"></script>
+</body>
+</html>
